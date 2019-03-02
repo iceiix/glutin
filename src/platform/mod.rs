@@ -24,6 +24,9 @@ mod platform;
 #[cfg(target_os = "emscripten")]
 #[path = "emscripten/mod.rs"]
 mod platform;
+#[cfg(target_arch = "wasm32")]
+#[path = "wasm32/mod.rs"]
+mod platform;
 
 #[cfg(all(
     not(target_os = "ios"),
@@ -35,6 +38,7 @@ mod platform;
     not(target_os = "freebsd"),
     not(target_os = "netbsd"),
     not(target_os = "openbsd"),
-    not(target_os = "emscripten")
+    not(target_os = "emscripten"),
+    not(target_arch = "wasm32"),
 ))]
 use this_platform_is_not_supported;

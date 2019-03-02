@@ -1,17 +1,12 @@
-#![cfg(any(target_os = "emscripten", target_arch = "wasm32"))]
+#![cfg(target_arch = "wasm32")]
 
-use std::ffi::CString;
-
-use {Api, ContextError, CreationError, GlAttributes, GlRequest};
+use {Api, ContextError, CreationError, GlAttributes};
 use {PixelFormat, PixelFormatRequirements};
 
 use winit;
 
-mod ffi;
-
 pub enum Context {
-    Window(ffi::EMSCRIPTEN_WEBGL_CONTEXT_HANDLE),
-    WindowedContext(winit::Window, ffi::EMSCRIPTEN_WEBGL_CONTEXT_HANDLE),
+    WindowedContext, //(winit::Window),
 }
 
 impl Context {
@@ -20,48 +15,11 @@ impl Context {
         wb: winit::WindowBuilder,
         el: &winit::EventsLoop,
         _pf_reqs: &PixelFormatRequirements,
-        gl_attr: &GlAttributes<&Context>,
+        _gl_attr: &GlAttributes<&Context>,
     ) -> Result<(winit::Window, Self), CreationError> {
         let window = wb.build(el)?;
 
-        let gl_attr = gl_attr.clone().map_sharing(|_| {
-            unimplemented!("Shared contexts are unimplemented in WebGL.")
-        });
-
-        // getting the default values of attributes
-        let mut attributes = unsafe {
-            use std::mem;
-            let mut attributes: ffi::EmscriptenWebGLContextAttributes =
-                mem::uninitialized();
-            ffi::emscripten_webgl_init_context_attributes(&mut attributes);
-            attributes
-        };
-
-        // setting the attributes
-        if let GlRequest::Specific(Api::WebGl, (major, minor)) = gl_attr.version
-        {
-            attributes.majorVersion = major as _;
-            attributes.minorVersion = minor as _;
-        }
-
-        // creating the context
-        let context = unsafe {
-            use std::{mem, ptr};
-            // TODO: correct first parameter based on the window
-            let context =
-                ffi::emscripten_webgl_create_context(ptr::null(), &attributes);
-            if context <= 0 {
-                return Err(CreationError::OsError(format!(
-                    "Error while calling emscripten_webgl_create_context: {}",
-                    error_to_str(mem::transmute(context))
-                )));
-            }
-            context
-        };
-
-        // TODO: emscripten_set_webglcontextrestored_callback
-
-        Ok((window, Context::Window(context)))
+        Ok((window, Context::WindowedContext))
     }
 
     #[inline]
@@ -71,8 +29,7 @@ impl Context {
         gl_attr: &GlAttributes<&Context>,
     ) -> Result<Self, CreationError> {
         let wb = winit::WindowBuilder::new().with_visibility(false);
-        Self::new(wb, el, pf_reqs, gl_attr).map(|(w, c)| match c {
-            Context::Window(c) => Context::WindowedContext(w, c),
+        Self::new(wb, el, pf_reqs, gl_attr).map(|(_w, c)| match c {
             _ => panic!(),
         })
     }
@@ -91,35 +48,23 @@ impl Context {
     #[inline]
     pub fn resize(&self, _width: u32, _height: u32) {
         match self {
-            Context::Window(_) => (), // TODO: ?
-            Context::WindowedContext(_, _) => unreachable!(),
+            Context::WindowedContext => unreachable!(),
         }
     }
 
     #[inline]
     pub unsafe fn make_current(&self) -> Result<(), ContextError> {
-        // TOOD: check if == EMSCRIPTEN_RESULT
-        ffi::emscripten_webgl_make_context_current(self.raw_handle());
         Ok(())
     }
 
     #[inline]
     pub fn is_current(&self) -> bool {
-        unsafe {
-            ffi::emscripten_webgl_get_current_context() == self.raw_handle()
-        }
+        true
     }
 
     #[inline]
-    pub fn get_proc_address(&self, addr: &str) -> *const () {
-        let addr = CString::new(addr).unwrap();
-
-        unsafe {
-            // FIXME: if `as_ptr()` is used, then wrong data is passed to
-            // emscripten
-            ffi::emscripten_GetProcAddress(addr.into_raw() as *const _)
-                as *const _
-        }
+    pub fn get_proc_address(&self, _addr: &str) -> *const () {
+        0 as *const _
     }
 
     #[inline]
@@ -147,38 +92,9 @@ impl Context {
             srgb: true,
         }
     }
-
-    #[inline]
-    pub unsafe fn raw_handle(&self) -> ffi::EMSCRIPTEN_WEBGL_CONTEXT_HANDLE {
-        match self {
-            Context::Window(c) => *c,
-            Context::WindowedContext(_, c) => *c,
-        }
-    }
 }
 
 impl Drop for Context {
     fn drop(&mut self) {
-        unsafe {
-            ffi::emscripten_webgl_destroy_context(self.raw_handle());
-        }
-    }
-}
-
-fn error_to_str(code: ffi::EMSCRIPTEN_RESULT) -> &'static str {
-    match code {
-        ffi::EMSCRIPTEN_RESULT_SUCCESS | ffi::EMSCRIPTEN_RESULT_DEFERRED => {
-            "Internal error in the library (success detected as failure)"
-        }
-
-        ffi::EMSCRIPTEN_RESULT_NOT_SUPPORTED => "Not supported",
-        ffi::EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED => "Failed not deferred",
-        ffi::EMSCRIPTEN_RESULT_INVALID_TARGET => "Invalid target",
-        ffi::EMSCRIPTEN_RESULT_UNKNOWN_TARGET => "Unknown target",
-        ffi::EMSCRIPTEN_RESULT_INVALID_PARAM => "Invalid parameter",
-        ffi::EMSCRIPTEN_RESULT_FAILED => "Failed",
-        ffi::EMSCRIPTEN_RESULT_NO_DATA => "No data",
-
-        _ => "Undocumented error",
     }
 }
