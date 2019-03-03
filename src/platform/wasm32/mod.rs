@@ -1,7 +1,7 @@
 #![cfg(target_arch = "wasm32")]
 
-use {Api, ContextError, CreationError, GlAttributes};
-use {PixelFormat, PixelFormatRequirements};
+use crate::{Api, ContextError, CreationError, GlAttributes};
+use crate::{PixelFormat, PixelFormatRequirements};
 
 use winit;
 
