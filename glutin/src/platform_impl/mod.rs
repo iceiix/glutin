@@ -24,3 +24,6 @@ mod platform_impl;
 #[cfg(target_os = "emscripten")]
 #[path = "emscripten/mod.rs"]
 mod platform_impl;
+#[cfg(target_arch = "wasm32")]
+#[path = "wasm32/mod.rs"]
+mod platform_impl;
