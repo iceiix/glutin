@@ -1,15 +1,58 @@
 # Unreleased
 
-- We no longer load `libegl.so` and `libgl.so` multiple times.
+# Version 0.21.0-rc2 (2019-04-08)
+
+ - **Breaking**: Removed `DisplayLost` variant to `ContextError`.
+ - **Breaking**: Renamed `NotCurrentContext` to `NotCurrent`.
+ - **Breaking**: Renamed `PossiblyCurrentContext` to `PossiblyCurrent`.
+ - Added `treat_as_current` function.
+
+# Version 0.21.0-rc1 (2019-04-07)
+
+ - **Breaking:** Replaced `CreationErrorPair` enum variant with `CreationErrors`.
+ - Added `Clone` to `ContextBuilder`.
+ - Added headless example.
+ - Removed internal code relating to libcaca.
+ - Implemented `Debug` on all public facing types.
+ - Dropping contexts on platforms using egl and/or glx no longer resets the
+ current context, if the context dropped wasn't the current context.
+ - Added context sharing support to MacOS.
+ - **Breaking**: Removed `ContextTrait`.
+ - **Breaking**: Renamed `OsMesaContextExt` to `HeadlessContextExt`. Added functions
+ for using egl-surfaceless.
+ - **Breaking**: Changed `WindowedContext` and `RawContext` into typedefs of
+ `ContextWrapper`.
+ - **Breaking**: Removed `new_windowed` and `new_headless` from `WindowedContext`
+ and `Context`, respectively.
+ - **Breaking**: Added two new types, `NotCurrentContext` and `PossiblyCurrentContext`,
+ which `RawContext`, `WindowedContext`, `ContextBuilder` and `Context` are now
+ generic over.
+ - Added `{make,treat_as}_not_current` function to `{Raw,Windowed,}Context`.
+ - We now load `libGL.so` instead of `libGLX.so`.
+ - **Breaking**: Added `DisplayLost` variant to `ContextError`.
+ - Fixed bug where we drop the hidden window belonging to a headless context on
+ on X11 and/or Wayland before the actual context.
+ - "Fixed" bug where we will close `EGLDisplay`s while they are still in use by
+ others. Angry and/or salty rant can be found in `glutin/src/api/egl/mod.rs`,
+ you can't miss it.
+ - **Breaking**: `WindowedContext`s now deref to `Context`, not `Window`. 
+ Please use `.window()` to access the window.
+
+# Version 0.20.0 (2019-03-09)
+
+- We no longer load `libEGL.so` and `libGL.so` multiple times.
 - Fixes `Context::is_current` incorrectly returning `false`.
+- Made `ContextBuilder`'s `pf_reqs` public.
 - **Breaking:** Renamed `GlContext{,Ext}` to `ContextTrait{,Ext}`.
 - **Breaking:** Renamed `GlWindow` to `WindowedContext`.
 - Implemented context sharing support for Windows and Linux.
-- Added support for separated contexts.
+- Added support for contexts made from raw parts for Windows and Linux.
 - **Breaking:** Removed `shareable_with_windowed_contexts`. Now you must build
 OsMesa contexts via a separate extension.
-- Added `ContextBuilder::build` method.
-- On X11 and Wayland, you can now use shared contexts, however, one limitation 
+- Added `ContextBuilder::build_{windowed,headless}` methods.
+- **Breaking:** Renamed `Context::new` to `Context::new_headless`. `new_headless` now accepts dimensions for the off-screen surface backing it.
+- **Breaking:** Renamed `GlWindow::new` to `WindowedContext::new_windowed`.
+- On X11 and Wayland, you can now use shared contexts, however, one limitation
 of the Wayland backend is that all shared contexts must use the same events
 pool as each other.
 - Added context sharing support to windows.
@@ -21,6 +64,7 @@ pool as each other.
 - Added `get_egl_display` method to `GlContextExt` trait and its implementation for platforms.
 - Removed minimum supported Rust version guarantee.
 - `NoBackendAvailable` is now `Sync`, as a result `CreationError` is also `Sync`.
+- Update winit dependency to 0.19.0. See [winit's CHANGELOG](https://github.com/tomaka/winit/blob/master/CHANGELOG.md#version-0190-2019-03-06) for more info.
 
 # Version 0.19.0 (2018-11-09)
 
