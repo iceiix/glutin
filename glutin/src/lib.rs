@@ -79,7 +79,7 @@
     target_os = "unknown",
 ))]
 #![deny(
-    warnings,
+    //warnings,
     missing_debug_implementations,
     //missing_docs,
 )]
