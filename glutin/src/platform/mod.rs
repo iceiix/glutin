@@ -24,9 +24,6 @@ mod platform;
 #[cfg(target_os = "emscripten")]
 #[path = "emscripten/mod.rs"]
 mod platform;
-#[cfg(target_arch = "wasm32")]
-#[path = "wasm32/mod.rs"]
-mod platform;
 
 #[cfg(not(any(
     target_os = "ios",
@@ -39,7 +36,6 @@ mod platform;
     target_os = "netbsd",
     target_os = "openbsd",
     target_os = "emscripten",
-    not(target_arch = "wasm32"),
 )))]
 #[path = "blank/mod.rs"]
 mod platform;
