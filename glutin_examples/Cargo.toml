@@ -12,7 +12,7 @@ publish = false
 
 [dependencies]
 glutin = { path = "../glutin" }
-winit = "0.19"
+winit = { git = "https://github.com/iceiix/winit", rev = "0e0ebeb34656dda53e0961638521b18a24254b78" }
 takeable-option = "0.4"
 image = "0.21"
 
