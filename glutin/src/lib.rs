@@ -76,7 +76,7 @@
     target_os = "netbsd",
     target_os = "openbsd",
     target_os = "emscripten",
-    target_os = "unknown",
+    target_arch = "wasm32",
 ))]
 #![deny(
     //warnings,
